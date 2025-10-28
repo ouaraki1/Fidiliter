@@ -1,0 +1,11 @@
+
+
+ajouter dans superadmin :
+
+getadmin
+
+
+admin:
+
+getclient
+getvendeur
