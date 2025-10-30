@@ -16,7 +16,7 @@ const historiqueSchema = new mongoose.Schema({
     ref: 'Product',
     required: true,
   },
-  points: {
+  quantite: {
     type: Number,
     required: true,
   },

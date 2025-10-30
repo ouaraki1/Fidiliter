@@ -7,7 +7,6 @@ const userSchema = new mongoose.Schema(
     name: { type: String },
 number: { 
   type: String, 
-  unique: true, 
   sparse: true, 
   required: function() { 
     return this.role !== 'superadmin'; 
@@ -15,6 +14,8 @@ number: {
 },    email: { type: String },
     city: { type: String },
     img: { type: String },
+    imgPublicId: { type: String }, 
+
     password: { type: String, required: true },
 
     store: { type: String },

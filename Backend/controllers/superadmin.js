@@ -1,56 +1,34 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { createWhatsAppSession } = require('../whatsapp');
-
-
-// const createAdmin = async (req, res) => {
-//   try {
-//     const { name, store, number, email, city, password } = req.body;
-
-//     const existing = await User.findOne({ $or: [{ email }, { number }] });
-//     if (existing)
-//       return res.status(400).json({ message: 'Email or phone number already in use' });
-
-//     const hashed = await bcrypt.hash(password, 10);
-
-//     const admin = await User.create({
-//       role: 'admin',
-//       name,
-//       store,
-//       number,
-//       email,
-//       city,
-//       password: hashed
-//     });
-
-//     // 🔹 إنشاء البوت وانتظار ظهور QR
-//     // const qrCodeBase64 = await createWhatsAppSession(admin._id); 
-
-//     const token = jwt.sign({ id: admin._id, role: admin.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
-
-//      res.status(201).json({ admin, token});  // , qrCode: qrCodeBase64 
-
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ message: 'Server error' });
-//   }
-// };
+const cloudinary = require('../config/cloudinary');
 
 
 const createAdmin = async (req, res) => {
   try {
     const { name, store, number, email, city, password } = req.body;
 
-    // التحقق من وجود نفس الإيميل أو الرقم مسبقًا
     const existing = await User.findOne({ $or: [{ email }, { number }] });
     if (existing)
       return res.status(400).json({ message: 'Email or phone number already in use' });
 
-    // تشفير كلمة المرور
     const hashed = await bcrypt.hash(password, 10);
 
-    // إنشاء الأدمن
+    let imageUrl = null;
+    let publicId = null;
+
+    if (req.file) {
+      const result = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream({ folder: 'admins' }, (err, result) => {
+          if (err) reject(err);
+          else resolve(result);
+        });
+        stream.end(req.file.buffer);
+      });
+      imageUrl = result.secure_url;
+      publicId = result.public_id;
+    }
+
     const admin = await User.create({
       role: 'admin',
       name,
@@ -58,19 +36,19 @@ const createAdmin = async (req, res) => {
       number,
       email,
       city,
-      password: hashed
+      password: hashed,
+      img: imageUrl,
+      imgPublicId: publicId
     });
 
-    // إنشاء التوكن
     const token = jwt.sign(
       { id: admin._id, role: admin.role },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
 
-    // ✅ بدون QR هنا
     res.status(201).json({
-      message: 'Admin created successfully',
+      message: '✅ Admin created successfully',
       admin,
       token
     });
@@ -85,11 +63,41 @@ const createAdmin = async (req, res) => {
 const editAdmin = async (req, res) => {
   try {
     const updates = req.body;
+    const admin = await User.findById(req.params.id);
+
+    if (!admin) return res.status(404).json({ message: 'Admin not found' });
+
     if (updates.password) updates.password = await bcrypt.hash(updates.password, 10);
-    const admin = await User.findByIdAndUpdate(req.params.id, updates, { new: true });
-    return res.json(admin);
-  } catch (err) { console.error(err); res.status(500).json({ message: 'Server error' }); }
+
+    if (req.file) {
+      if (admin.imgPublicId) {
+        await cloudinary.uploader.destroy(admin.imgPublicId);
+      }
+
+      const result = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream({ folder: 'admins' }, (err, result) => {
+          if (err) reject(err);
+          else resolve(result);
+        });
+        stream.end(req.file.buffer);
+      });
+
+      updates.img = result.secure_url;
+      updates.imgPublicId = result.public_id;
+    }
+
+    const updatedAdmin = await User.findByIdAndUpdate(req.params.id, updates, { new: true });
+    res.json({
+      message: '✅ Admin updated successfully',
+      updatedAdmin
+    });
+
+  } catch (err) {
+    console.error('❌ Error updating admin:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
 };
+
 
 const deleteAdmin = async (req, res) => {
   try {
@@ -222,7 +230,7 @@ const rejectVendor = async (req, res) => {
 
 const updateSuperAdminProfile = async (req, res) => {
   try {
-    const superAdminId = req.user._id; 
+    const superAdminId = req.user._id;
     const updates = req.body;
 
     const superAdmin = await User.findById(superAdminId);
@@ -233,7 +241,7 @@ const updateSuperAdminProfile = async (req, res) => {
     if (updates.email || updates.number) {
       const existing = await User.findOne({
         $or: [{ email: updates.email }, { number: updates.number }],
-        _id: { $ne: superAdminId } 
+        _id: { $ne: superAdminId }
       });
       if (existing) {
         return res.status(400).json({ message: 'Email or number already in use' });
@@ -283,7 +291,7 @@ const listAllVendors = async (req, res) => {
     }
 
     const vendors = await User.find({ role: 'vendor' })
-      .populate('assignedAdmin', 'name email store') 
+      .populate('assignedAdmin', 'name email store')
       .select('-password');
 
     res.json(vendors);
@@ -295,4 +303,4 @@ const listAllVendors = async (req, res) => {
 };
 
 
-module.exports = { createAdmin, editAdmin, deleteAdmin, disableAdmin, enableAdmin, createVendorForAdmin, editVendor, deleteVendor, listPendingVendors, approveVendor, rejectVendor , updateSuperAdminProfile, listAllAdmins, listAllVendors };
+module.exports = { createAdmin, editAdmin, deleteAdmin, disableAdmin, enableAdmin, createVendorForAdmin, editVendor, deleteVendor, listPendingVendors, approveVendor, rejectVendor, updateSuperAdminProfile, listAllAdmins, listAllVendors };

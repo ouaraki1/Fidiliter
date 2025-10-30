@@ -1,5 +1,7 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
+const cloudinary = require('../config/cloudinary'); 
+const multer = require('../middleware/upload'); 
 
 const getClientProfile = async (req, res) => {
   try {
@@ -31,21 +33,35 @@ const updateClientProfile = async (req, res) => {
       return res.status(403).json({ message: 'Access denied' });
     }
 
-
-if (updates.email || updates.number) {
-  const query = { _id: { $ne: clientId } }; 
-
-  if (updates.email) query.email = updates.email;
-  if (updates.number) query.number = updates.number;
-
-  const existing = await User.findOne(query);
-  if (existing) {
-    return res.status(400).json({ message: 'Email or number already in use' });
-  }
-}
+    if (updates.email || updates.number) {
+      const query = { _id: { $ne: clientId } }; 
+      if (updates.email) query.email = updates.email;
+      if (updates.number) query.number = updates.number.replace(/\D/g, '');
+      const existing = await User.findOne(query);
+      if (existing) return res.status(400).json({ message: 'Email or number already in use' });
+    }
 
     if (updates.password) {
       updates.password = await bcrypt.hash(updates.password, 10);
+    }
+
+    if (updates.number) updates.number = updates.number.replace(/\D/g, '');
+
+    if (req.file) {
+      if (client.imgPublicId) {
+        await cloudinary.uploader.destroy(client.imgPublicId);
+      }
+
+      const result = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream({ folder: 'clients' }, (err, result) => {
+          if (err) reject(err);
+          else resolve(result);
+        });
+        stream.end(req.file.buffer);
+      });
+
+      updates.img = result.secure_url;
+      updates.imgPublicId = result.public_id;
     }
 
     const updatedClient = await User.findByIdAndUpdate(
@@ -64,5 +80,6 @@ if (updates.email || updates.number) {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 module.exports = { getClientProfile, updateClientProfile };

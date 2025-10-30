@@ -1,11 +1,10 @@
-
-
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { sendWhatsAppMessage } = require('../Whatsapp');
 
 const registerSuperAdmin = async (req, res) => {
-  try { 
+  try {
     const { name, number, email, password } = req.body;
 
     const count = await User.countDocuments({ role: 'superadmin' });
@@ -82,5 +81,64 @@ const login = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+const otpStore = {}; 
 
-module.exports = { registerSuperAdmin, login };
+const sendOtp = async (req, res) => {
+  try {
+    const { number } = req.body;
+    if (!number) return res.status(400).json({ message: 'Numéro requis' });
+
+    const user = await User.findOne({ number });
+    if (!user) return res.status(404).json({ message: 'Utilisateur non trouvé' });
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString(); 
+    const expires = Date.now() + 5 * 60 * 1000; 
+
+    otpStore[number] = { otp, expires };
+
+    setTimeout(() => {
+      if (otpStore[number] && otpStore[number].otp === otp) {
+        delete otpStore[number];
+        console.log(`OTP for ${number} expired and removed from store`);
+      }
+    }, 5 * 60 * 1000);
+
+    await sendWhatsAppMessage(number, `🟢 Code de réinitialisation : ${otp}`);
+
+    res.json({ message: 'Code envoyé sur WhatsApp' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+};
+
+const verifyOtpAndReset = async (req, res) => {
+  try {
+    const { number, otp, newPassword } = req.body;
+
+    if (!number || !otp || !newPassword)
+      return res.status(400).json({ message: 'Champs requis' });
+
+    const record = otpStore[number];
+    if (!record || record.otp !== otp)
+      return res.status(400).json({ message: 'Code invalide' });
+
+    if (Date.now() > record.expires)
+      return res.status(400).json({ message: 'Code expiré' });
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await User.updateOne({ number }, { password: hashed });
+
+    delete otpStore[number]; 
+    res.json({ message: 'Mot de passe réinitialisé avec succès' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+};
+
+module.exports = {
+  registerSuperAdmin, login,
+  sendOtp,
+  verifyOtpAndReset,
+};
