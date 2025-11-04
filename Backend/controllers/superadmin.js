@@ -215,10 +215,32 @@ const listPendingVendors = async (req, res) => {
 const approveVendor = async (req, res) => {
   try {
     const vendorId = req.params.vendorId;
-    const vendor = await User.findByIdAndUpdate(vendorId, { pending: false }, { new: true });
-    res.json(vendor);
-  } catch (err) { console.error(err); res.status(500).json({ message: 'Server error' }); }
+
+    const vendor = await User.findByIdAndUpdate(
+      vendorId,
+      {
+        pending: false,
+        approvedBy: req.user._id,   
+        approvedAt: new Date(),     
+      },
+      { new: true }
+    ).populate('approvedBy', 'name role');
+
+    if (!vendor) {
+      return res.status(404).json({ message: 'Vendor not found' });
+    }
+
+    res.json({
+      message: 'Vendor approved successfully',
+      vendor
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
 };
+
 
 const rejectVendor = async (req, res) => {
   try {
@@ -301,6 +323,9 @@ const listAllVendors = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+
+// stats
 
 
 module.exports = { createAdmin, editAdmin, deleteAdmin, disableAdmin, enableAdmin, createVendorForAdmin, editVendor, deleteVendor, listPendingVendors, approveVendor, rejectVendor, updateSuperAdminProfile, listAllAdmins, listAllVendors };

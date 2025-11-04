@@ -2,19 +2,19 @@ const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema(
   {
-    role: { type: String, enum: ['superadmin','admin','vendor','client'], required: true },
+    role: { type: String, enum: ['superadmin', 'admin', 'vendor', 'client'], required: true },
 
     name: { type: String },
-number: { 
-  type: String, 
-  sparse: true, 
-  required: function() { 
-    return this.role !== 'superadmin'; 
-  } 
-},    email: { type: String },
+    number: {
+      type: String,
+      sparse: true,
+      required: function () {
+        return this.role !== 'superadmin';
+      }
+    }, email: { type: String },
     city: { type: String },
     img: { type: String },
-    imgPublicId: { type: String }, 
+    imgPublicId: { type: String },
 
     password: { type: String, required: true },
 
@@ -23,9 +23,12 @@ number: {
     createdByAdmin: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     assignedAdmin: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     createdByVendor: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-
+    approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    approvedAt: { type: Date },
     disabled: { type: Boolean, default: false },
     pending: { type: Boolean, default: false },
+    points: { type: Number, default: 0 },
+
   },
   { timestamps: true }
 );

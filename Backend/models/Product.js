@@ -1,17 +1,25 @@
 const mongoose = require('mongoose');
 
-const ProductSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  size: { type: String },
+const variantSchema = new mongoose.Schema({
+  size: { type: String, required: true },
   unit: {
     type: String,
-    required: true,
-    enum: ['ml', 'l', 'kg', 'g', 'taille', 'pas uniter'],
-    default: 'pas uniter'
+    enum: ['ml', 'l', 'kg', 'g', 'taille', 'Bouteille vide', 'personne', 'pas uniter',],
+    default: 'pas uniter',
+    required: true
   },
   points: { type: Number, required: true },
-  adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+});
+
+const ProductSchema = new mongoose.Schema({
+  name: { type: String, required: true },
   code: { type: String, required: true },
+  createdByAdmin: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  variants: [variantSchema], 
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });

@@ -4,12 +4,16 @@ const ProductsController = require('../controllers/ProductsController');
 const {authMiddleware ,roleMiddleware } = require('../middleware/auth'); 
 
 router.use(authMiddleware);
-router.use(roleMiddleware('admin'));
 
-router.post('/', ProductsController.createProduct);
-router.put('/:id', ProductsController.updateProduct);
-router.delete('/:id', ProductsController.deleteProduct);
-router.get('/', ProductsController.listProducts);
+router.post('/', roleMiddleware('admin'),ProductsController.createProduct);//done
 
+router.put('/:id', roleMiddleware('admin'),ProductsController.updateProduct);//done
+router.put('/:productId/variant/:variantId', roleMiddleware('admin'), ProductsController.updateVariant); //done
+
+router.delete('/delete-all', roleMiddleware(['admin']), ProductsController.deleteAllProducts); //done
+router.delete('/:id', roleMiddleware('admin'),ProductsController.deleteProduct);//done
+router.delete('/:productId/variant/:variantId', roleMiddleware('admin'), ProductsController.deleteVariant); //done
+
+router.get('/search', roleMiddleware(['admin','vendor']), ProductsController.searchProducts);    //done       /search?query=<search_term>
+router.get('/', roleMiddleware(['admin','vendor']), ProductsController.listProducts);//done
 module.exports = router;
- 

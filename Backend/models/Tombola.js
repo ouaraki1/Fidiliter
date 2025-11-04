@@ -1,34 +1,17 @@
 const mongoose = require('mongoose');
 
-const tombolaSchema = new mongoose.Schema({
-  adminId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Admin',
-    required: true,
-  },
-  dateDebut: {
-    type: Date,
-    required: true,
-  },
-  dateFin: {
-    type: Date,
-    required: true,
-  },
-  ville: {
-    type: String,
-    required: true,
-  },
-  nbGagnants: {
-    type: Number,
-    required: true,
-    min: 1,
-  },
-  gagnants: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Client',
-    },
-  ],
-}, { timestamps: true });
+const TombolaSchema = new mongoose.Schema({
+  adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  dateFrom: { type: Date, required: true },
+  dateTo: { type: Date, required: true },
+  cities: [{ type: String, required: true }],
+  winners: [{
+    clientId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    name: String,
+    number: String,
+    city: String
+  }],
+  createdAt: { type: Date, default: Date.now }
+});
 
-module.exports = mongoose.model('Tombola', tombolaSchema);
+module.exports = mongoose.model('Tombola', TombolaSchema);

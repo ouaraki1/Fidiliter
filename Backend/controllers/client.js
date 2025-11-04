@@ -82,4 +82,57 @@ const updateClientProfile = async (req, res) => {
 };
 
 
-module.exports = { getClientProfile, updateClientProfile };
+const getClientHistorique = async (req, res) => {
+  try {
+    const clientId = req.user._id;
+    const { ville, type, dateDebut, dateFin } = req.query; 
+
+    const client = await User.findById(clientId);
+    if (!client || client.role !== 'client') {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const filtre = { clientId };
+
+    if (ville) {
+      filtre.ville = { $regex: new RegExp(ville, 'i') }; 
+    }
+
+    if (type) {
+      filtre.type = type; 
+    }
+
+    if (dateDebut || dateFin) {
+      filtre.createdAt = {};
+      if (dateDebut) filtre.createdAt.$gte = new Date(dateDebut);
+      if (dateFin) filtre.createdAt.$lte = new Date(dateFin);
+    }
+
+    const historique = await Historique.find(filtre)
+      .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      message: 'Historique du client filtré avec succès ✅',
+      filters: {
+        ville: ville || 'toutes',
+        type: type || 'tous',
+        dateDebut: dateDebut || 'non spécifiée',
+        dateFin: dateFin || 'non spécifiée'
+      },
+      count: historique.length,
+      historique
+    });
+
+  } catch (err) {
+    console.error('❌ Erreur lors de la récupération de l’historique du client :', err);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur serveur',
+      error: err.message
+    });
+  }
+};
+
+
+module.exports = { getClientProfile, updateClientProfile ,getClientHistorique };

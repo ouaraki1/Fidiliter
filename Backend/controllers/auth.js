@@ -1,7 +1,7 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { sendWhatsAppMessage } = require('../Whatsapp');
+const { sendWhatsAppMessage } = require('../whatsapp');
 
 const registerSuperAdmin = async (req, res) => {
   try {
@@ -45,6 +45,7 @@ const registerSuperAdmin = async (req, res) => {
   }
 };
 
+
 const login = async (req, res) => {
   try {
     const { identifier, password } = req.body;
@@ -58,6 +59,12 @@ const login = async (req, res) => {
 
     if (!user) return res.status(404).json({ message: 'User not found' });
     if (user.disabled) return res.status(403).json({ message: 'Account disabled' });
+
+    if (user.pending) {
+      return res.status(403).json({
+        message: 'Account pending approval by superadmin'
+      });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ message: 'Wrong credentials' });
@@ -81,6 +88,8 @@ const login = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+
 const otpStore = {}; 
 
 const sendOtp = async (req, res) => {
