@@ -5,15 +5,18 @@ const {authMiddleware ,roleMiddleware } = require('../middleware/auth');
 
 router.use(authMiddleware);
 
-router.post('/', roleMiddleware('admin'),ProductsController.createProduct);//done
+// =================== CRUD PRODUCT  =======================================
+router.post('/', roleMiddleware('admin'),ProductsController.createProduct);
+router.put('/:id', roleMiddleware('admin'),ProductsController.updateProduct);
+router.delete('/delete-all', roleMiddleware(['admin']), ProductsController.deleteAllProducts); 
+router.delete('/:id', roleMiddleware('admin'),ProductsController.deleteProduct);
 
-router.put('/:id', roleMiddleware('admin'),ProductsController.updateProduct);//done
-router.put('/:productId/variant/:variantId', roleMiddleware('admin'), ProductsController.updateVariant); //done
+// =================== CRUD VARIANT  =========================================================
+router.put('/:productId/variant/:variantId', roleMiddleware('admin'), ProductsController.updateVariant); 
+router.delete('/:productId/variant/:variantId', roleMiddleware('admin'), ProductsController.deleteVariant); 
 
-router.delete('/delete-all', roleMiddleware(['admin']), ProductsController.deleteAllProducts); //done
-router.delete('/:id', roleMiddleware('admin'),ProductsController.deleteProduct);//done
-router.delete('/:productId/variant/:variantId', roleMiddleware('admin'), ProductsController.deleteVariant); //done
-
-router.get('/search', roleMiddleware(['admin','vendor']), ProductsController.searchProducts);    //done       /search?query=<search_term>
-router.get('/', roleMiddleware(['admin','vendor']), ProductsController.listProducts);//done
+// =================== GET PRODUCT =========================================================
+router.get('/search', roleMiddleware(['admin','vendor']), ProductsController.searchProducts);       //    /search?query=<search_term>
+router.get('/', roleMiddleware(['admin','vendor']), ProductsController.listProducts);
+ 
 module.exports = router;

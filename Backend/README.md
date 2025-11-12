@@ -1,10 +1,26 @@
-historique :
+# backend :
+dashbord => vendor - admin - superadmin
+listtombola 
+rapport ai --> CHATGPT  --> OPENROUTE
+wathssap - otp wathssap 
+ # auto create client send les info le client : deactiver cette partier
+adnin : upload image d.... | clint  : T
+PAGINATION  : T
 
-| كل historique | `GET /api/vendor/historique`                                                                       |
-| حسب التاريخ   | `GET /api/vendor/historique?startDate=2025-10-01&endDate=2025-10-31`                               |
-| حسب النوع     | `GET /api/vendor/historique?type=cadeau`                                                           |
-| حسب زبون معين | `GET /api/vendor/historique?clientId=66fcae...`                                                    |
-| دمج الكل معًا | `GET /api/vendor/historique?clientId=66fcae...&type=ajout&startDate=2025-10-01&endDate=2025-10-31` |
 
 
 
+T : TRAVAILLE 
+TEST : TEST DANS POSTAMAN ET VALIDE 
+NON : PAS TRAVAILLE 
+ERROR : PROBLEME DE LA FONCTIONALITE
+
+demain : test tous les fonctionaliter dans postman and stocker data pour test tous les dashbord and list tombola et avant cette tach 
+travaille rapport ai et deactiver partier de send messag avant cree client 
+et pour observer error donner solution 
+
+
+documentation de api 
+
+
+# frontend :

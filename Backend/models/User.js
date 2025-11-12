@@ -1,36 +1,32 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
   {
-    role: { type: String, enum: ['superadmin', 'admin', 'vendor', 'client'], required: true },
-
-    name: { type: String },
-    number: {
+    role: {
       type: String,
-      sparse: true,
-      required: function () {
-        return this.role !== 'superadmin';
-      }
-    }, email: { type: String },
+      enum: ["superadmin", "admin", "vendor", "client"],
+      required: true,
+    },
+    name: { type: String },
+    store: { type: String },
+    number: { type: String, sparse: true, required: function () { return this.role !== "superadmin"; } },
+    email: { type: String },
     city: { type: String },
+    password: { type: String, required: true },
+
     img: { type: String },
     imgPublicId: { type: String },
 
-    password: { type: String, required: true },
-
-    store: { type: String },
-
-    createdByAdmin: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    assignedAdmin: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    createdByVendor: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
-    approvedAt: { type: Date },
+    createdByAdmin: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    assignedAdmin: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    createdByVendor: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     disabled: { type: Boolean, default: false },
-    pending: { type: Boolean, default: false },
     points: { type: Number, default: 0 },
-
+    maxClients: { type: Number },
+    maxVendors: { type: Number },
   },
+
   { timestamps: true }
 );
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model("User", userSchema);

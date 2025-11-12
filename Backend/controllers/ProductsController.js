@@ -4,7 +4,7 @@ const VALID_UNITS = ['ml', 'l', 'kg', 'g', 'taille', 'Bouteille vide', 'personne
 
 const createProduct = async (req, res) => {
   try {
-    let { name, size, unit, points, code } = req.body;
+    let { name, code, size, unit, points } = req.body;
     const adminId = req.user.id;
 
     if (req.user.role !== 'admin')
@@ -70,10 +70,10 @@ const updateProduct = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Produit introuvable ou non autorisé.' });
 
     if (name && name.toLowerCase() !== product.name.toLowerCase()) {
-      const exists = await Product.findOne({ 
-        createdByAdmin: adminId, 
-        name: new RegExp(`^${name}$`, 'i'), 
-        _id: { $ne: id } 
+      const exists = await Product.findOne({
+        createdByAdmin: adminId,
+        name: new RegExp(`^${name}$`, 'i'),
+        _id: { $ne: id }
       });
       if (exists) {
         return res.status(400).json({ success: false, message: 'Nom déjà utilisé par un autre produit.' });
@@ -82,10 +82,10 @@ const updateProduct = async (req, res) => {
     }
 
     if (code && code !== product.code) {
-      const existsCode = await Product.findOne({ 
-        createdByAdmin: adminId, 
-        code, 
-        _id: { $ne: id } 
+      const existsCode = await Product.findOne({
+        createdByAdmin: adminId,
+        code,
+        _id: { $ne: id }
       });
       if (existsCode) {
         return res.status(400).json({ success: false, message: 'Code déjà utilisé par un autre produit.' });
@@ -182,33 +182,6 @@ const deleteVariant = async (req, res) => {
     res.status(500).json({ success: false, message: 'Erreur serveur', error: err.message });
   }
 };
-
-const listProducts = async (req, res) => {
-  try {
-    const adminId = req.user.role === 'admin' ? req.user.id : req.user.assignedAdmin;
-    const produits = await Product.find({ createdByAdmin: adminId }).select('name code variants').sort({ name: 1 });
-    res.json({ success: true, data: produits });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: 'Erreur serveur' });
-  }
-};
-
-const searchProducts = async (req, res) => {
-  try {
-    const adminId = req.user.role === 'admin' ? req.user.id : req.user.assignedAdmin;
-    const { query } = req.query;
-    if (!query) return res.status(400).json({ success: false, message: 'Entrez une valeur à rechercher' });
-
-    const regex = new RegExp(query, 'i');
-    const produits = await Product.find({ createdByAdmin: adminId, $or: [{ name: regex }, { code: regex }] }).select('name code variants');
-    res.json({ success: true, data: produits });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: 'Erreur serveur' });
-  }
-};
-
 const deleteAllProducts = async (req, res) => {
   try {
     const adminId = req.user.role === 'admin' ? req.user.id : req.user.assignedAdmin;
@@ -219,6 +192,99 @@ const deleteAllProducts = async (req, res) => {
     res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 };
+
+// const listProducts = async (req, res) => {
+//   try {
+//     const adminId = req.user.role === 'admin' ? req.user.id : req.user.assignedAdmin;
+//     const produits = await Product.find({ createdByAdmin: adminId }).select('name code variants').sort({ name: 1 });
+//     res.json({ success: true, data: produits });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ success: false, message: 'Erreur serveur' });
+//   }
+// };
+
+// const searchProducts = async (req, res) => {
+//   try {
+//     const adminId = req.user.role === 'admin' ? req.user.id : req.user.assignedAdmin;
+//     const { query } = req.query;
+//     if (!query) return res.status(400).json({ success: false, message: 'Entrez une valeur à rechercher' });
+
+//     const regex = new RegExp(query, 'i');
+//     const produits = await Product.find({ createdByAdmin: adminId, $or: [{ name: regex }, { code: regex }] }).select('name code variants');
+//     res.json({ success: true, data: produits });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ success: false, message: 'Erreur serveur' });
+//   }
+// };
+
+
+
+const listProducts = async (req, res) => {
+  try {
+    const adminId = req.user.role === 'admin' ? req.user.id : req.user.assignedAdmin;
+    const { page = 1, limit = 10 } = req.query;
+
+    const query = Product.find({ createdByAdmin: adminId })
+      .select('name code variants')
+      .sort({ name: 1 });
+
+    const total = await query.clone().countDocuments();
+
+    const produits = await query
+      .skip((parseInt(page) - 1) * parseInt(limit))
+      .limit(parseInt(limit));
+
+    res.json({
+      success: true,
+      count: produits.length,
+      total,
+      page: parseInt(page),
+      totalPages: Math.ceil(total / limit),
+      data: produits,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+};
+
+const searchProducts = async (req, res) => {
+  try {
+    const adminId = req.user.role === 'admin' ? req.user.id : req.user.assignedAdmin;
+    const { query, page = 1, limit = 10 } = req.query;
+
+    if (!query)
+      return res.status(400).json({ success: false, message: 'Entrez une valeur à rechercher' });
+
+    const regex = new RegExp(query, 'i');
+    const searchQuery = Product.find({
+      createdByAdmin: adminId,
+      $or: [{ name: regex }, { code: regex }],
+    }).select('name code variants');
+
+    const total = await searchQuery.clone().countDocuments();
+
+    const produits = await searchQuery
+      .skip((parseInt(page) - 1) * parseInt(limit))
+      .limit(parseInt(limit));
+
+    res.json({
+      success: true,
+      count: produits.length,
+      total,
+      page: parseInt(page),
+      totalPages: Math.ceil(total / limit),
+      data: produits,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+};
+
+
 
 module.exports = {
   createProduct,

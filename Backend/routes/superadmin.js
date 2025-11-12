@@ -6,27 +6,28 @@ const SuperAdminController = require('../controllers/superadmin');
 
 router.use(authMiddleware, roleMiddleware(['superadmin']));
 
-router.post('/create-admin', upload.single('img'), SuperAdminController.createAdmin); // done
-router.put('/edit-admin/:id',upload.single('img'), SuperAdminController.editAdmin); // done
-router.delete('/delete-admin/:id', SuperAdminController.deleteAdmin);// done
-router.get('/admins', authMiddleware, SuperAdminController.listAllAdmins);// done
+
+// ================== ADMIN ===================================
+router.post('/create-admin', upload.single('img'), SuperAdminController.createAdmin);  // D
+router.put('/edit-admin/:id', upload.single('img'), SuperAdminController.editAdmin);  // D
+router.put('/disable-admin/:id', SuperAdminController.disableAdmin);  // D
+router.put('/enable-admin/:id', SuperAdminController.enableAdmin);  // D
+router.get('/admins', authMiddleware, SuperAdminController.listAllAdmins);  // D
+router.delete('/delete-all-admins', authMiddleware, SuperAdminController.deleteAllAdmins);
+router.delete('/delete-admin/:id', SuperAdminController.deleteAdmin);  // D
+
+// ================== VENDOR ===================================
+router.post('/create-vendor-for-admin/:adminId', SuperAdminController.createVendorForAdmin);  // D
+router.put('/edit-vendor/:vendorId', SuperAdminController.editVendor);  // D
+router.get('/vendors', authMiddleware, SuperAdminController.listAllVendors);  // D
+router.get('/vendors-by-admin/:adminId', SuperAdminController.getVendorsByAdmin); // D
+router.delete('/delete-all-vendors', authMiddleware, SuperAdminController.deleteAllVendors);
+router.delete('/delete-vendor/:vendorId', SuperAdminController.deleteVendor);  // D
 
 
-router.put('/disable-admin/:id', SuperAdminController.disableAdmin);// done
-router.put('/enable-admin/:id', SuperAdminController.enableAdmin);// done
+// ================== SUPERADMIN ===================================
+router.put('/update-profile', authMiddleware, SuperAdminController.updateSuperAdminProfile);  // D
+router.get('/stats', SuperAdminController.getSuperAdminStats);// ATT
 
-
-router.post('/create-vendor-for-admin/:adminId', SuperAdminController.createVendorForAdmin);// done
-router.put('/edit-vendor/:vendorId', SuperAdminController.editVendor);// done
-router.delete('/delete-vendor/:vendorId', SuperAdminController.deleteVendor);// done
-router.get('/vendors', authMiddleware, SuperAdminController.listAllVendors);// done
-
-router.get('/pending-vendors', SuperAdminController.listPendingVendors);// done
-router.put('/approve-vendor/:vendorId', SuperAdminController.approveVendor);// done
-router.put('/reject-vendor/:vendorId', SuperAdminController.rejectVendor);// done
-
-
-
-router.put('/update-profile', authMiddleware, SuperAdminController.updateSuperAdminProfile);// done
 
 module.exports = router; 

@@ -15,11 +15,11 @@ app.use(express.json({ type: ['application/json', 'text/plain'] }));
 app.use(cors());
 
 app.use('/api/auth', authRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/vendor', vendorRoutes);
 app.use('/api/superadmin', superAdminRoutes);
-app.use('/api/client', clientRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/products', ProductRoutes);
+app.use('/api/vendor', vendorRoutes);
+app.use('/api/client', clientRoutes);
 
 const PORT = process.env.PORT || 5000;
 mongoose

@@ -12,7 +12,7 @@ const variantSchema = new mongoose.Schema({
 });
 
 const ProductSchema = new mongoose.Schema({
-  name: { type: String, required: true },
+  name: { type: String },
   code: { type: String, required: true },
   createdByAdmin: {
     type: mongoose.Schema.Types.ObjectId,
